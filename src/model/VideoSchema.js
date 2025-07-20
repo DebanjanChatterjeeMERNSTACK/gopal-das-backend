@@ -12,7 +12,7 @@ const VideoSchema = new mongoose.Schema({
 {
     timestamps:true
 });
-const videoschema = new mongoose.model("video", VideoSchema)
+const videoschema = new mongoose.model("videoGallery", VideoSchema)
 
 module.exports =videoschema
 

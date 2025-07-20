@@ -8,6 +8,7 @@ dotenv.config({ quiet: true });
 const Login = require("./route/LoginRoute");
 const Video = require("./route/VideoRoute");
 const Contact = require("./route/ContactRoute");
+const Image=require("./route/ImageRoute")
 
 const PORT = process.env.PORT;
 
@@ -21,9 +22,12 @@ app.use(cors(corsOptions));
 
 app.use(express.json());
 
+app.use("/upload",express.static("src/Image_Gallery"))
+
 app.use(Login);
 app.use(Video);
 app.use(Contact);
+app.use(Image)
 
 app.listen(PORT, () => {
   console.log(`Server Connact -${PORT}`);
