@@ -3,10 +3,12 @@ const mongoose=require("mongoose")
 const GalleryImageSchema=new mongoose.Schema({
 
   galleryImage:{
-    type:String
+    type:String,
+    require:true
   },
   publicId:{
-  type:String
+  type:String,
+   require:true
   }, 
   Date:{
      type:Date,

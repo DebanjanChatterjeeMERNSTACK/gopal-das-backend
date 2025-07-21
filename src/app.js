@@ -9,6 +9,7 @@ const Login = require("./route/LoginRoute");
 const Video = require("./route/VideoRoute");
 const Contact = require("./route/ContactRoute");
 const Image=require("./route/ImageRoute")
+const Blog=require("./route/BlogRoute")
 
 const PORT = process.env.PORT;
 
@@ -23,11 +24,14 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use("/upload",express.static("src/Image_Gallery"))
+app.use("/upload",express.static("src/Blog_Image"))
+
 
 app.use(Login);
 app.use(Video);
 app.use(Contact);
 app.use(Image)
+app.use(Blog)
 
 app.listen(PORT, () => {
   console.log(`Server Connact -${PORT}`);

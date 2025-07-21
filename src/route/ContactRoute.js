@@ -3,7 +3,7 @@ const route = express.Router();
 const ContactSchema = require("../model/ContactSchema");
 const dotenv = require("dotenv");
 const { authenticate, authorize } = require("../middleware/Auth");
-const contactschema = require("../model/ContactSchema");
+// const ContactSchema = require("../model/ContactSchema");
 dotenv.config({ quiet: true });
 
 route.post("/add_contact",async (req, res) => {
@@ -41,7 +41,7 @@ route.post("/add_contact",async (req, res) => {
 route.get("/get_contact",  authenticate,
   authorize(["admin"]), async (req, res) => {
   try {
-    const data = await contactschema.find({}).sort({_id:-1});
+    const data = await ContactSchema.find({}).sort({_id:-1});
 
     if (data) {
       res.send({
@@ -64,7 +64,7 @@ route.delete(
     try {
       const id = req.params.id;
 
-      const data = await contactschema.find({ _id: id });
+      const data = await ContactSchema.find({ _id: id });
       if (!data) {
         return res.send({
           mess: "error",
@@ -73,7 +73,7 @@ route.delete(
         });
       }
 
-      const deleteid = await contactschema.findOneAndDelete(
+      const deleteid = await ContactSchema.findOneAndDelete(
         { _id: id },
         { _id: id }
       );

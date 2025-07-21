@@ -4,12 +4,10 @@ const GallerySchema = require("../model/ImageSchema");
 const { authenticate, authorize } = require("../middleware/Auth");
 const multer = require("multer");
 const fs = require("fs");
-// const path = require("path");
+
 const cloudinary = require("cloudinary").v2;
 
 const dotenv = require("dotenv");
-// const { v4: uuidv4 } = require("uuid");
-
 dotenv.config({ quiet: true });
 
 cloudinary.config({
@@ -104,7 +102,7 @@ route.get(
 route.post("/bulk_delete",  authenticate, authorize(["admin"]), async (req, res) => {
   const { ids } = req.body;
 
-  // ✅ Check for valid IDs array
+
   if (!Array.isArray(ids) || ids.length === 0) {
     return res.send({
       mess: "error",
@@ -114,16 +112,16 @@ route.post("/bulk_delete",  authenticate, authorize(["admin"]), async (req, res)
   }
 
   try {
-    // ✅ Get images by _id
+    
     const images = await GallerySchema.find({ _id: { $in: ids } });
 
-    // ✅ Destroy each image from Cloudinary
+    
     const deletePromises = images.map((img) =>
       cloudinary.uploader.destroy(img.publicId)
     );
     await Promise.all(deletePromises);
 
-    // ✅ Delete from MongoDB
+   
     await GallerySchema.deleteMany({ _id: { $in: ids } });
 
     return res.send({
