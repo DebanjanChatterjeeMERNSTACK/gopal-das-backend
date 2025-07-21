@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) =>
     cb(null, Date.now() + "-" + file.originalname.replace(/\s+/g, "_")),
 });
-const upload = multer({ storage, limits: { fileSize: 1024 * 1024 } });
+const upload = multer({ storage:storage });
 
 route.post(
   "/add_blog",
@@ -29,8 +29,12 @@ route.post(
   upload.single("blog_Image"),
   async (req, res) => {
     try {
-      const { blogTitle, blogDescriptiion } = req.body;
+      const { blogTitle, blogDescription } = req.body;
       const blogImage = req.file;
+
+      // console.log(req.body,req.file)
+
+      // return
 
       const result = await cloudinary.uploader.upload(blogImage.path, {
         folder: "blogImage",
@@ -38,7 +42,7 @@ route.post(
 
       const data = await BlogSchema({
         blogTitle: blogTitle,
-        blogDescriptiion: blogDescriptiion,
+        blogDescription: blogDescription,
         blogImage: result.secure_url,
         publicId: result.public_id,
       });
@@ -88,7 +92,7 @@ route.put(
   async (req, res) => {
     try {
       const blogId = req.params.id;
-      const { blogTitle, blogDescriptiion } = req.body;
+      const { blogTitle, blogDescription } = req.body;
 
       const blog = await BlogSchema.findById(blogId);
       if (!blog) {
@@ -101,7 +105,7 @@ route.put(
 
       let updatedFields = {
         blogTitle,
-        blogDescriptiion,
+        blogDescription,
       };
 
       // ✅ If new image uploaded
