@@ -10,6 +10,7 @@ const Video = require("./route/VideoRoute");
 const Contact = require("./route/ContactRoute");
 const Image=require("./route/ImageRoute")
 const Blog=require("./route/BlogRoute")
+const Book=require("./route/BookRoute")
 
 const PORT = process.env.PORT;
 
@@ -25,6 +26,7 @@ app.use(express.json());
 
 app.use("/upload",express.static("src/Image_Gallery"))
 app.use("/upload",express.static("src/Blog_Image"))
+app.use("/upload",express.static("src/Book_Document"))
 
 
 app.use(Login);
@@ -32,6 +34,7 @@ app.use(Video);
 app.use(Contact);
 app.use(Image)
 app.use(Blog)
+app.use(Book)
 
 app.listen(PORT, () => {
   console.log(`Server Connact -${PORT}`);
