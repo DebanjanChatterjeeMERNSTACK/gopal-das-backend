@@ -154,7 +154,7 @@ route.put(
 
 
 route.delete(
-  "/blog_delete/:id",
+  "/delete_blog/:id",
   authenticate,
   authorize(["admin"]),
   async (req, res) => {
