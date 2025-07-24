@@ -77,7 +77,7 @@ route.delete(
         res.send({
           mess: "success",
           status: 200,
-          text: "Permanent Delete Successfull",
+          text: "Delete Successfull",
         });
       }
     } catch (error) {

@@ -139,7 +139,8 @@ route.put("/update_book/:id",authenticate,authorize(["admin"]),
 
 
        res.send({
-        message: "Book Updated Successfully",
+        mess:"success",
+        text: "Book Updated Successfully",
         status: 200,
         data: updatedBook,
       });
@@ -157,7 +158,8 @@ route.delete("/delete_book/:id",  authenticate,authorize(["admin"]),
 async (req, res) => {
   const id = req.params.id;
   try {
-    const data = await BookSchema.fineOneAndDelete({ _id: id }, { _id: id });
+    const data = await BookSchema.findOneAndDelete({ _id: id }, { _id: id });
+
     const book_image = data.bookImage.split("/");
     fs.unlink(`src/Book_Document/${book_image[4]}`, (err) => {
       if (err) console.error("Error deleting image:", err);
