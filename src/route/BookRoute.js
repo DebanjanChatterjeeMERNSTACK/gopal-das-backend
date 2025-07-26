@@ -21,7 +21,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-route.post( "/add_book", authenticate, authorize(["admin"]),
+
+
+route.post("/add_book",authenticate,authorize(["admin"]),
   upload.fields([
     { name: "book_image", maxCount: 1 },
     { name: "book_pdf", maxCount: 1 },
@@ -62,8 +64,8 @@ route.post( "/add_book", authenticate, authorize(["admin"]),
   }
 );
 
-route.get("/get_book", authenticate, authorize(["admin"]),
- async (req, res) => {
+route.get("/get_book", authenticate, authorize(["admin"]), 
+async (req, res) => {
   try {
     const data = await BookSchema.find({}).sort({ _id: -1 });
     res.send({
@@ -75,9 +77,9 @@ route.get("/get_book", authenticate, authorize(["admin"]),
   } catch (err) {
     res.send({ mess: "error", status: 400, text: err.message });
   }
-});
+}
+);
 
-// UPDATE BOOK API
 route.put("/update_book/:id",authenticate,authorize(["admin"]),
   upload.fields([
     { name: "book_image", maxCount: 1 },
@@ -105,7 +107,7 @@ route.put("/update_book/:id",authenticate,authorize(["admin"]),
 
       // Handle file updates
       const filesToDelete = [];
-      
+
       if (req.files?.book_image?.[0]) {
         const newImage = req.files.book_image[0].filename;
         updateData.bookImage = `${process.env.URL}/upload/${newImage}`;
@@ -119,27 +121,27 @@ route.put("/update_book/:id",authenticate,authorize(["admin"]),
       }
 
       // Update book in database
-      const updatedBook = await BookSchema.findByIdAndUpdate(
-        id,
-        updateData,
-        {new:true}
-    );
+      const updatedBook = await BookSchema.findByIdAndUpdate(id, updateData, {
+        new: true,
+      });
 
       // Delete old files after successful update
       if (filesToDelete.length > 0) {
         await Promise.all(
-          filesToDelete.map(fileUrl => {
+          filesToDelete.map((fileUrl) => {
             if (!fileUrl) return;
-            const fileName = fileUrl.split('/').pop();
-            return fs.promises.unlink(`src/Book_Document/${fileName}`)
-              .catch(err => console.error(`Error deleting file ${fileName}:`, err));
+            const fileName = fileUrl.split("/").pop();
+            return fs.promises
+              .unlink(`src/Book_Document/${fileName}`)
+              .catch((err) =>
+                console.error(`Error deleting file ${fileName}:`, err)
+              );
           })
         );
       }
 
-
-       res.send({
-        mess:"success",
+      res.send({
+        mess: "success",
         text: "Book Updated Successfully",
         status: 200,
         data: updatedBook,
@@ -154,25 +156,79 @@ route.put("/update_book/:id",authenticate,authorize(["admin"]),
   }
 );
 
-route.delete("/delete_book/:id",  authenticate,authorize(["admin"]), 
-async (req, res) => {
-  const id = req.params.id;
+route.delete("/delete_book/:id",authenticate,authorize(["admin"]),
+  async (req, res) => {
+    const id = req.params.id;
+    try {
+      const data = await BookSchema.findOneAndDelete({ _id: id }, { _id: id });
+
+      const book_image = data.bookImage.split("/");
+      fs.unlink(`src/Book_Document/${book_image[4]}`, (err) => {
+        if (err) console.error("Error deleting image:", err);
+      });
+
+      const book_pdf = data.bookPdf.split("/");
+      fs.unlink(`src/Book_Document/${book_pdf[4]}`, (err) => {
+        if (err) console.error("Error deleting pdf:", err);
+      });
+      res.send({
+        mess: "success",
+        status: 200,
+        text: "Book Details Delete Successfully",
+      });
+    } catch (err) {
+      res.send({ mess: "error", status: 400, text: err.message });
+    }
+  }
+);
+
+
+
+
+
+route.get("/get_all_book", async (req, res) => {
   try {
-    const data = await BookSchema.findOneAndDelete({ _id: id }, { _id: id });
-
-    const book_image = data.bookImage.split("/");
-    fs.unlink(`src/Book_Document/${book_image[4]}`, (err) => {
-      if (err) console.error("Error deleting image:", err);
-    });
-
-    const book_pdf = data.bookPdf.split("/");
-    fs.unlink(`src/Book_Document/${book_pdf[4]}`, (err) => {
-      if (err) console.error("Error deleting pdf:", err);
-    });
+    const data = await BookSchema.find({}).sort({ _id: -1 });
     res.send({
       mess: "success",
       status: 200,
-      text: "Book Details Delete Successfully",
+      text: "Fetch Successfully",
+      data: data,
+    });
+  } catch (err) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+});
+
+route.get("/get_id_book/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = await BookSchema.find({ _id: id }).sort({ _id: -1 });
+    res.send({
+      mess: "success",
+      status: 200,
+      text: "Fetch Successfully",
+      data: data,
+    });
+  } catch (err) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+});
+
+route.get("/get_search_book", async (req, res) => {
+  try {
+    const search = req.query.s;
+    const data = await BookSchema.find({
+      $or: [
+        { bookTitle: { $regex: search, $options: "i" } },
+        { bookDescription: { $regex: search, $options: "i" } },
+      ],
+    }).sort({ _id: -1 });
+    res.send({
+      mess: "success",
+      status: 200,
+      text: "Fetch Successfully",
+      data: data,
     });
   } catch (err) {
     res.send({ mess: "error", status: 400, text: err.message });

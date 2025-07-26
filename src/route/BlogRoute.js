@@ -22,10 +22,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage:storage });
 
-route.post(
-  "/add_blog",
-  authenticate,
-  authorize(["admin"]),
+
+
+route.post( "/add_blog",authenticate,authorize(["admin"]),
   upload.single("blog_Image"),
   async (req, res) => {
     try {
@@ -67,7 +66,8 @@ route.post(
   }
 );
 
-route.get("/get_blog", authenticate, authorize(["admin"]), async (req, res) => {
+route.get("/get_blog", authenticate, authorize(["admin"]), 
+async (req, res) => {
   try {
     const data = await BlogSchema.find({}).sort({ _id: -1 });
 
@@ -80,14 +80,10 @@ route.get("/get_blog", authenticate, authorize(["admin"]), async (req, res) => {
   } catch (err) {
     res.send({ mess: "error", status: 400, text: err.message });
   }
-});
+}
+);
 
-
-
-route.put(
-  "/update_blog/:id",
-  authenticate,
-  authorize(["admin"]),
+route.put("/update_blog/:id",authenticate,authorize(["admin"]),
   upload.single("blog_Image"),
   async (req, res) => {
     try {
@@ -152,11 +148,7 @@ route.put(
   }
 );
 
-
-route.delete(
-  "/delete_blog/:id",
-  authenticate,
-  authorize(["admin"]),
+route.delete("/delete_blog/:id",authenticate,authorize(["admin"]),
   async (req, res) => {
     const blogId = req.params.id;
 
@@ -204,5 +196,61 @@ route.delete(
     }
   }
 );
+
+
+
+
+route.get("/get_id_blog/:id", async (req, res) => {
+  try {
+    const id =req.params.id
+    const data = await BlogSchema.find({_id:id}).sort({ _id: -1 });
+
+    res.send({
+      mess: "success",
+      status: 200,
+      text: "Fetch Successfull",
+      data: data,
+    });
+  } catch (err) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+});
+
+route.get("/get_all_blog", async (req, res) => {
+  try {
+    const data = await BlogSchema.find({}).sort({ _id: -1 });
+
+    res.send({
+      mess: "success",
+      status: 200,
+      text: "Fetch Successfull",
+      data: data,
+    });
+  } catch (err) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+});
+
+route.get("/get_search_blog", async (req, res) => {
+  try {
+    const search=req.query.s
+    const data = await BlogSchema.find({
+      $or: [
+        { blogTitle: { $regex: search, $options: "i" } },
+        { blogDescription: { $regex: search, $options: "i" } },
+      ],
+    }).sort({ _id: -1 });
+
+    res.send({
+      mess: "success",
+      status: 200,
+      text: "Fetch Successfull",
+      data: data,
+    });
+  } catch (err) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+});
+
 
 module.exports = route;
