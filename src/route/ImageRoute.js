@@ -140,4 +140,22 @@ route.post("/bulk_delete",  authenticate, authorize(["admin"]), async (req, res)
   }
 });
 
+
+route.get( "/get_all_galleryimage",
+  async (req, res) => {
+    try {
+      const data = await GallerySchema.find({}).sort({ _id: -1 });
+
+      res.send({
+        mess: "success",
+        status: 200,
+        text: "Fetch Successfull",
+        data: data,
+      });
+    } catch (err) {
+      res.send({ mess: "error", status: 400, text: err.message });
+    }
+  }
+);
+
 module.exports = route;

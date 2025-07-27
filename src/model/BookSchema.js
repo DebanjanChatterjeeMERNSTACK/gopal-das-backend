@@ -14,6 +14,7 @@ const BookSchema = new mongoose.Schema({
   bookDescription:{
     type:String
   },
+  bookPages: [String],
   Date:{
     type:Date,
     default:Date.now()

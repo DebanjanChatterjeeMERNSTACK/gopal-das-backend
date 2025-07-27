@@ -86,4 +86,21 @@ route.delete(
   }
 );
 
+route.get("/get_all_video", async (req, res) => {
+  try {
+    const data = await VideoSchema.find({}).sort({_id:-1});
+
+    if (data) {
+      res.send({
+        mess: "success",
+        status: 200,
+        text: "Fetch Successfull",
+        data: data,
+      });
+    }
+  } catch (error) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+});
+
 module.exports=route

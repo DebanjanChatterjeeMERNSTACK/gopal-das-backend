@@ -203,7 +203,7 @@ route.delete("/delete_blog/:id",authenticate,authorize(["admin"]),
 route.get("/get_id_blog/:id", async (req, res) => {
   try {
     const id =req.params.id
-    const data = await BlogSchema.find({_id:id}).sort({ _id: -1 });
+    const data = await BlogSchema.findOne({_id:id});
 
     res.send({
       mess: "success",
