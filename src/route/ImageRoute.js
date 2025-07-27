@@ -22,7 +22,23 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) =>
     cb(null, Date.now() + "-" + file.originalname.replace(/\s+/g, "_")),
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 1MB in bytes
+  },
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype === "image/jpeg" ||
+      file.mimetype === "image/png" ||
+      file.mimetype === "image/jpg" 
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed!"));
+    }
+  },
+});
 
 route.post(
   "/add_galleryimage",
@@ -44,6 +60,7 @@ route.post(
       for (const file of req.files) {
         const result = await cloudinary.uploader.upload(file.path, {
           folder: "gallery",
+          chunk_size:6000000,
         });
 
         uploaded.push({
