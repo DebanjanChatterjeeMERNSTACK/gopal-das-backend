@@ -7,7 +7,15 @@ const fs = require("fs");
 const path = require("path");
 const dotenv = require("dotenv");
 const { v4: uuidv4 } = require("uuid");
-const pdf = require("pdf-poppler");
+// Use platform detection to handle different operating systems
+const os = require('os');
+const { execFile } = require('child_process');
+
+// Only require pdf-poppler on supported platforms
+let pdf;
+if (os.platform() === 'win32' || os.platform() === 'darwin') {
+  pdf = require("pdf-poppler");
+}
 
 dotenv.config({ quiet: true });
 
@@ -19,6 +27,37 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+
+// Function to convert PDF to images on Linux using pdftocairo
+const convertPdfToImagesLinux = (pdfPath, outputDir, options) => {
+  return new Promise((resolve, reject) => {
+    const format = options.format || 'jpeg';
+    const outPrefix = options.out_prefix || 'page';
+    
+    // Create output directory if it doesn't exist
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+    
+    // Build command arguments
+    const args = [
+      `-${format}`,
+      '-scale-to', '1024',
+      pdfPath,
+      `${path.join(outputDir, outPrefix)}`
+    ];
+    
+    // Execute pdftocairo command
+    execFile('pdftocairo', args, (error, stdout, stderr) => {
+      if (error) {
+        console.error('PDF conversion error:', error);
+        reject(error);
+      } else {
+        resolve(stdout);
+      }
+    });
+  });
+};
 
 route.post(
   "/add_book",
@@ -54,12 +93,23 @@ route.post(
 
       fs.mkdirSync(outputDir, { recursive: true });
 
-      await pdf.convert(pdfPath, {
-        format: "jpeg",
-        out_dir: outputDir,
-        out_prefix: "page",
-        page: null,
-      });
+      // Use appropriate conversion method based on platform
+      const platform = os.platform();
+      if (platform === 'win32' || platform === 'darwin') {
+        // Use pdf-poppler for Windows and Mac
+        await pdf.convert(pdfPath, {
+          format: "jpeg",
+          out_dir: outputDir,
+          out_prefix: "page",
+          page: null,
+        });
+      } else {
+        // Use pdftocairo for Linux
+        await convertPdfToImagesLinux(pdfPath, outputDir, {
+          format: "jpeg",
+          out_prefix: "page"
+        });
+      }
 
       const imageFiles = fs
         .readdirSync(outputDir)
