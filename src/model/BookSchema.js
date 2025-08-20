@@ -11,6 +11,14 @@ const BookSchema = new mongoose.Schema({
    bookPdf:{
     type:String
   },
+  publicId: {
+    type: String,
+    required: false
+  },
+  pagesPublicIds: {
+    type: [String],
+    default: []
+  },
   bookDescription:{
     type:String
   },
