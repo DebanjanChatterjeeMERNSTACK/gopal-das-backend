@@ -279,25 +279,39 @@ route.delete("/delete_book/:id", authenticate, authorize(["admin"]),
       // ==== Delete book image ====
       const bookImageFile = data.bookImage?.split("/").pop();
       if (bookImageFile) {
-        fs.unlink(`src/Book_Document/${bookImageFile}`, (err) => {
-          if (err) console.error("Error deleting image:", err);
-        });
+        try {
+          if (fs.existsSync(`src/Book_Document/${bookImageFile}`)) {
+            fs.unlinkSync(`src/Book_Document/${bookImageFile}`);
+          } else {
+            console.log(`Image file not found: src/Book_Document/${bookImageFile}`);
+          }
+        } catch (err) {
+          console.error("Error deleting image:", err);
+        }
       }
 
       // ==== Delete book PDF ====
       const bookPdfFile = data.bookPdf?.split("/").pop();
       if (bookPdfFile) {
-        fs.unlink(`src/Book_Document/${bookPdfFile}`, (err) => {
-          if (err) console.error("Error deleting PDF:", err);
-        });
+        try {
+          if (fs.existsSync(`src/Book_Document/${bookPdfFile}`)) {
+            fs.unlinkSync(`src/Book_Document/${bookPdfFile}`);
+          } else {
+            console.log(`PDF file not found: src/Book_Document/${bookPdfFile}`);
+          }
+        } catch (err) {
+          console.error("Error deleting PDF:", err);
+        }
 
         // ==== Delete converted PDF images folder ====
         const pdfFolderName = path.basename(bookPdfFile, path.extname(bookPdfFile));
         const imageFolder = path.join("src/Book_Document/images", pdfFolderName);
         if (fs.existsSync(imageFolder)) {
-          fs.rm(imageFolder, { recursive: true, force: true }, (err) => {
-            if (err) console.error("Error deleting image folder:", err);
-          });
+          try {
+            fs.rmSync(imageFolder, { recursive: true, force: true });
+          } catch (err) {
+            console.error("Error deleting image folder:", err);
+          }
         }
       }
 
