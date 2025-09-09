@@ -93,11 +93,11 @@ route.post(
   ]),
   async (req, res) => {
     try {
-      const { bookTitle, bookDescription } = req.body;
+      const { bookTitle, bookDescription ,categoryName } = req.body;
       const bookImage = req.files["book_image"][0];
       const bookPdf = req.files["book_pdf"][0].filename;
 
-      if (!bookDescription || !bookImage || !bookTitle || !bookPdf) {
+      if (!bookDescription || !bookImage || !bookTitle || !bookPdf || !categoryName) {
         return res.send({
           mess: "error",
           status: 400,
@@ -173,6 +173,7 @@ route.post(
         bookTitle,
         bookDescription,
         bookImage: BookImage,
+        categoryName:categoryName,
         bookPdf: BookPdf,
         bookPages: bookPages,
         publicId: imageResult.public_id, // Cover image public ID
@@ -223,7 +224,7 @@ route.put("/update_book/:id", authenticate, authorize(["admin"]),
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { bookTitle, bookDescription } = req.body;
+      const { bookTitle, bookDescription ,categoryName } = req.body;
 
       const existingBook = await BookSchema.findById(id);
       if (!existingBook) {
@@ -237,6 +238,7 @@ route.put("/update_book/:id", authenticate, authorize(["admin"]),
       const updateData = {
         bookTitle,
         bookDescription,
+        categoryName
       };
 
       // ===== Handle book image update =====
