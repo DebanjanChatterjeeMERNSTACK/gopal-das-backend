@@ -3,13 +3,13 @@ const route = express.Router();
 const CategorySchema = require("../model/CategorySchema");
 const dotenv = require("dotenv");
 const { authenticate, authorize } = require("../middleware/Auth");
-// const ContactSchema = require("../model/ContactSchema");
+
 dotenv.config({ quiet: true });
 
 route.post("/add_category",authenticate,
   authorize(["admin"]),async (req, res) => {
   try {
-    const categoryTitle = req.body;
+    const {categoryTitle} = req.body;
     //  console.log(link)
     if (!categoryTitle) {
       return res.send({
@@ -55,11 +55,48 @@ route.put("/update_category/:id",authenticate,
         mess: "success",
         status: 200,
         text: "Category Update Successfull",
+        data
       });
   } catch (err) {
     res.send({ mess: "error", status: 400, text: err.message });
   }
 });
 
+
+route.get("/get_category",  authenticate,
+  authorize(["admin"]), async (req, res) => {
+  try {
+    const data = await CategorySchema.find({}).sort({_id:-1});
+
+    if (data) {
+      res.send({
+        mess: "success",
+        status: 200,
+        text: "Fetch Successfull",
+        data: data,
+      });
+    }
+  } catch (error) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+});
+
+
+route.get("/get_all_category",  async (req, res) => {
+  try {
+    const data = await CategorySchema.find({}).sort({_id:-1});
+
+    if (data) {
+      res.send({
+        mess: "success",
+        status: 200,
+        text: "Fetch Successfull",
+        data: data,
+      });
+    }
+  } catch (error) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+});
 
 module.exports=route
