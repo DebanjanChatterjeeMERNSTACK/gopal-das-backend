@@ -3,7 +3,7 @@ const route = express.Router();
 const CategorySchema = require("../model/CategorySchema");
 const dotenv = require("dotenv");
 const { authenticate, authorize } = require("../middleware/Auth");
-
+const BookSchema = require("../model/BookSchema");
 dotenv.config({ quiet: true });
 
 route.post("/add_category",authenticate,
@@ -51,12 +51,14 @@ route.put("/update_category/:id",authenticate,
     const data = await CategorySchema.findOneAndUpdate({_id:id},{
       categoryTitle:categoryTitle
     });
+    await BookSchema.find({ categoryName: data.categoryTitle}).updateMany({ categoryName: categoryTitle }); // Using chaining syntax
       res.send({
         mess: "success",
         status: 200,
         text: "Category Update Successfull",
         data
       });
+      
   } catch (err) {
     res.send({ mess: "error", status: 400, text: err.message });
   }

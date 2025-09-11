@@ -443,7 +443,19 @@ route.delete("/delete_book/:id", authenticate, authorize(["admin"]),
 );
 
 
-
+route.get("/get_book/:cat", async (req, res) => {
+  try {
+    const data = await BookSchema.find({categoryName:req.params.cat}).sort({ _id: -1 });
+    res.send({
+      mess: "success",
+      status: 200,
+      text: "Fetch Successfully",
+      data: data,
+    });
+  } catch (err) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+});
 
 
 route.get("/get_all_book", async (req, res) => {
