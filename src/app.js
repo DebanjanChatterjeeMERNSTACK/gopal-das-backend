@@ -29,6 +29,7 @@ const Image=require("./route/ImageRoute");
 const Blog=require("./route/BlogRoute");
 const Book=require("./route/BookRoute");
 const Category=require("./route/CategoryRoute");
+const Comments=require("./route/CommentsRoute");
 
 // Use PORT from environment variable or default to 10000 for Render
 const PORT = process.env.PORT || 10000;
@@ -55,6 +56,7 @@ app.use(Image);
 app.use(Blog);
 app.use(Book);
 app.use(Category)
+app.use(Comments)
 
 app.listen(PORT, () => {
   console.log(`Server Connected on port ${PORT}`);
