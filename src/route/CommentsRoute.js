@@ -9,6 +9,8 @@ route.post("/add_comment/:id", async (req, res) => {
   try {
     const { commentsName, commentsEmail, comments } = req.body;
     const bookId = req.params.id;
+
+   
     //  console.log(link)
     if (!commentsName || !commentsEmail || !comments) {
       return res.send({
@@ -54,7 +56,8 @@ route.get("/get_comment/:id",async (req, res) => {
   }
 );
 
-route.get("/get_all_comment", async (req, res) => {
+route.get("/get_all_comments",authenticate,
+  authorize(["admin"]), async (req, res) => {
   try {
     const data = await CommentSchema.find({}).sort({ _id: -1 });
 
@@ -71,7 +74,8 @@ route.get("/get_all_comment", async (req, res) => {
   }
 });
 
-route.post("/delete_comment/:id",authenticate,
+
+route.delete("/delete_comment/:id",authenticate,
   authorize(["admin"]), async (req, res) => {
   try {
    
