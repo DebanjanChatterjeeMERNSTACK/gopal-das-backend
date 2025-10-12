@@ -54,6 +54,7 @@ route.post(
           text: "No Files Were Uploaded.",
         });
       }
+      const {imagePosition}=req.body
 
       const uploaded = [];
 
@@ -66,6 +67,7 @@ route.post(
         uploaded.push({
           galleryImage: result.secure_url,
           publicId: result.public_id,
+          imagePosition:imagePosition
         });
 
         fs.unlinkSync(file.path); // Delete temp file

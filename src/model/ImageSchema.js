@@ -1,7 +1,10 @@
 const mongoose=require("mongoose")
 
 const GalleryImageSchema=new mongoose.Schema({
-
+  imagePosition:{
+    type:String,
+    require:true
+  },
   galleryImage:{
     type:String,
     require:true
