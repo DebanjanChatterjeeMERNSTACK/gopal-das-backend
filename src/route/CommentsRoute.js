@@ -10,7 +10,6 @@ route.post("/add_comment/:id", async (req, res) => {
     const { commentsName, commentsEmail, comments } = req.body;
     const bookId = req.params.id;
 
-   
     //  console.log(link)
     if (!commentsName || !commentsEmail || !comments) {
       return res.send({
@@ -38,9 +37,32 @@ route.post("/add_comment/:id", async (req, res) => {
   }
 });
 
-route.get("/get_comment/:id",async (req, res) => {
+route.get("/get_comment/:id", async (req, res) => {
+  try {
+    const data = await CommentSchema.find({ bookId: req.params.id }).sort({
+      _id: -1,
+    });
+
+    if (data) {
+      res.send({
+        mess: "success",
+        status: 200,
+        text: "Fetch Successfull",
+        data: data,
+      });
+    }
+  } catch (error) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+});
+
+route.get(
+  "/get_all_comments",
+  authenticate,
+  authorize(["admin"]),
+  async (req, res) => {
     try {
-      const data = await CommentSchema.find({bookId:req.params.id}).sort({ _id: -1 });
+      const data = await CommentSchema.find({}).sort({ _id: -1 });
 
       if (data) {
         res.send({
@@ -56,50 +78,38 @@ route.get("/get_comment/:id",async (req, res) => {
   }
 );
 
-route.get("/get_all_comments",authenticate,
-  authorize(["admin"]), async (req, res) => {
-  try {
-    const data = await CommentSchema.find({}).sort({ _id: -1 });
+route.delete(
+  "/delete_comment/:id",
+  authenticate,
+  authorize(["admin"]),
+  async (req, res) => {
+    try {
+      const id = req.params.id;
 
-    if (data) {
-      res.send({
-        mess: "success",
-        status: 200,
-        text: "Fetch Successfull",
-        data: data,
-      });
-    }
-  } catch (error) {
-    res.send({ mess: "error", status: 400, text: err.message });
-  }
-});
-
-
-route.delete("/delete_comment/:id",authenticate,
-  authorize(["admin"]), async (req, res) => {
-  try {
-   
-    const id = req.params.id;
-
-   const data= await CommentSchema.findOneAndDelete({_id:id},{_id:id})
+      const data = await CommentSchema.findOneAndDelete(
+        { _id: id },
+        { _id: id }
+      );
       res.send({
         mess: "success",
         status: 200,
         text: "Comments Save Successfull",
-        data
+        data,
       });
-    
-  } catch (err) {
-    res.send({ mess: "error", status: 400, text: err.message });
+    } catch (err) {
+      res.send({ mess: "error", status: 400, text: err.message });
+    }
   }
-});
+);
 
-
-route.post("/add_reply/:id",authenticate,
-  authorize(["admin"]), async (req, res) => {
-  try {
-    const { replyComment} = req.body;
-    const {id}= req.params;
+route.post(
+  "/add_reply/:id",
+  authenticate,
+  authorize(["admin"]),
+  async (req, res) => {
+    try {
+      const { replyComment } = req.body;
+      const { id } = req.params;
 
       if (!replyComment || !id) {
         return res.send({
@@ -109,7 +119,7 @@ route.post("/add_reply/:id",authenticate,
         });
       }
 
-   const comment = await CommentSchema.findById(id);
+      const comment = await CommentSchema.findById(id);
       if (!comment) {
         return res.send({
           mess: "error",
@@ -118,22 +128,21 @@ route.post("/add_reply/:id",authenticate,
         });
       }
 
-     comment.replyComment = replyComment;
+      comment.replyComment = replyComment;
 
       // If you expect multiple replies, use this instead:
       // comment.replyComment.push(replyComment);
 
       await comment.save();
-     res.send({
+      res.send({
         mess: "success",
         status: 200,
         text: "Reply Save Successfull",
       });
-   
-  } catch (err) {
-    res.send({ mess: "error", status: 400, text: err.message });
+    } catch (err) {
+      res.send({ mess: "error", status: 400, text: err.message });
+    }
   }
-});
-
+);
 
 module.exports = route;
