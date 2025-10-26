@@ -18,6 +18,10 @@ const commentSchema = new mongoose.Schema(
       type: String,
       require: true,
     },
+    replyComment:{
+       type: String,
+       default:null
+    }
   },
   {
     timestamps: true,

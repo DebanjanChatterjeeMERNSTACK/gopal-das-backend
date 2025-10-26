@@ -95,4 +95,45 @@ route.delete("/delete_comment/:id",authenticate,
 });
 
 
+route.post("/add_reply/:id",authenticate,
+  authorize(["admin"]), async (req, res) => {
+  try {
+    const { replyComment} = req.body;
+    const {id}= req.params;
+
+      if (!replyComment || !id) {
+        return res.send({
+          mess: "error",
+          status: 400,
+          text: "Reply Comment OR ID Is Missing",
+        });
+      }
+
+   const comment = await CommentSchema.findById(id);
+      if (!comment) {
+        return res.send({
+          mess: "error",
+          status: 404,
+          text: "Comment Not Found",
+        });
+      }
+
+     comment.replyComment = replyComment;
+
+      // If you expect multiple replies, use this instead:
+      // comment.replyComment.push(replyComment);
+
+      await comment.save();
+     res.send({
+        mess: "success",
+        status: 200,
+        text: "Reply Save Successfull",
+      });
+   
+  } catch (err) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+});
+
+
 module.exports = route;
