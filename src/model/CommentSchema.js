@@ -2,9 +2,10 @@ const mongoose = require("mongoose");
 
 const commentSchema = new mongoose.Schema(
   {
-    bookId: {
-      type: String,
-      require: true,
+     bookId: {
+      type: mongoose.Schema.Types.ObjectId, // Use ObjectId instead of String
+      ref: "book", // Must match the name of your Book model
+      required: true,
     },
     commentsName: {
       type: String,

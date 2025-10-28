@@ -48,7 +48,7 @@ route.get("/get_video",  authenticate,
       });
     }
   } catch (error) {
-    res.send({ mess: "error", status: 400, text: err.message });
+    res.send({ mess: "error", status: 400, text: error.message });
   }
 });
 
@@ -81,7 +81,7 @@ route.delete(
         });
       }
     } catch (error) {
-      res.send({ mess: "error", status: 400, text: err.message });
+      res.send({ mess: "error", status: 400, text: error.message });
     }
   }
 );
@@ -99,7 +99,7 @@ route.get("/get_all_video", async (req, res) => {
       });
     }
   } catch (error) {
-    res.send({ mess: "error", status: 400, text: err.message });
+    res.send({ mess: "error", status: 400, text: error.message });
   }
 });
 

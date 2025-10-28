@@ -51,7 +51,7 @@ route.get("/get_contact",  authenticate,
         data: data,
       });
     }
-  } catch (error) {
+  } catch (err) {
     res.send({ mess: "error", status: 400, text: err.message });
   }
 });
@@ -84,7 +84,7 @@ route.delete(
           text: "Permanent Delete Successfull",
         });
       }
-    } catch (error) {
+    } catch (err) {
       res.send({ mess: "error", status: 400, text: err.message });
     }
   }

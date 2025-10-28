@@ -51,10 +51,12 @@ route.get("/get_comment/:id", async (req, res) => {
         data: data,
       });
     }
-  } catch (error) {
+  } catch (err) {
     res.send({ mess: "error", status: 400, text: err.message });
   }
 });
+
+
 
 route.get(
   "/get_all_comments",
@@ -62,18 +64,30 @@ route.get(
   authorize(["admin"]),
   async (req, res) => {
     try {
-      const data = await CommentSchema.find({}).sort({ _id: -1 });
+      const data = await CommentSchema.find({})
+        .sort({ _id: -1 })
+        .populate("bookId", "bookTitle bookImage"); // ✅ Correct field name
 
       if (data) {
         res.send({
           mess: "success",
           status: 200,
-          text: "Fetch Successfull",
+          text: "Fetch Successful",
           data: data,
+        });
+      } else {
+        res.send({
+          mess: "error",
+          status: 404,
+          text: "No comments found",
         });
       }
     } catch (error) {
-      res.send({ mess: "error", status: 400, text: err.message });
+      res.send({
+        mess: "error",
+        status: 400,
+        text: error.message, // ✅ Corrected from err.message
+      });
     }
   }
 );

@@ -78,7 +78,7 @@ route.get("/get_category",  authenticate,
         data: data,
       });
     }
-  } catch (error) {
+  } catch (err) {
     res.send({ mess: "error", status: 400, text: err.message });
   }
 });
@@ -96,7 +96,7 @@ route.get("/get_all_category",  async (req, res) => {
         data: data,
       });
     }
-  } catch (error) {
+  } catch (err) {
     res.send({ mess: "error", status: 400, text: err.message });
   }
 });
