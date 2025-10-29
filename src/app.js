@@ -27,6 +27,7 @@ const Video = require("./route/VideoRoute");
 const Contact = require("./route/ContactRoute");
 const Image=require("./route/ImageRoute");
 const Blog=require("./route/BlogRoute");
+const Story=require("./route/StoryRoute")
 const Book=require("./route/BookRoute");
 const Category=require("./route/CategoryRoute");
 const Comments=require("./route/CommentsRoute");
@@ -54,6 +55,7 @@ app.use(Video);
 app.use(Contact);
 app.use(Image);
 app.use(Blog);
+app.use(Story)
 app.use(Book);
 app.use(Category)
 app.use(Comments)
