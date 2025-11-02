@@ -32,8 +32,7 @@ const Book=require("./route/BookRoute");
 const Category=require("./route/CategoryRoute");
 const Comments=require("./route/CommentsRoute");
 
-// Use PORT from environment variable or default to 10000 for Render
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 5000;
 
 const corsOptions = {
   origin: "*", // Allow only frontend
