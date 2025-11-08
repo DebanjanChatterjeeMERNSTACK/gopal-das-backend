@@ -86,8 +86,6 @@ const uploadToCloudinary = async (imagePath, folder) => {
 
 route.post(
   "/add_book",
-  authenticate,
-  authorize(["admin"]),
   upload.fields([
     { name: "book_image", maxCount: 1 },
     { name: "book_pdf", maxCount: 1 },
@@ -228,8 +226,6 @@ route.get("/get_book", authenticate, authorize(["admin"]), async (req, res) => {
 
 route.put(
   "/update_book/:id",
-  authenticate,
-  authorize(["admin"]),
   upload.fields([
     { name: "book_image", maxCount: 1 },
     { name: "book_pdf", maxCount: 1 },
