@@ -8,14 +8,14 @@ const path = require("path");
 const dotenv = require("dotenv");
 const { v4: uuidv4 } = require("uuid");
 // Use platform detection to handle different operating systems
-const os = require("os");
-const { execFile } = require("child_process");
+const os = require('os');
+const { execFile } = require('child_process');
 // Add Cloudinary
 const cloudinary = require("cloudinary").v2;
 
 // Only require pdf-poppler on supported platforms
 let pdf;
-if (os.platform() === "win32" || os.platform() === "darwin") {
+if (os.platform() === 'win32' || os.platform() === 'darwin') {
   pdf = require("pdf-poppler");
 }
 
@@ -41,27 +41,26 @@ const upload = multer({ storage });
 // Function to convert PDF to images on Linux using pdftocairo
 const convertPdfToImagesLinux = (pdfPath, outputDir, options) => {
   return new Promise((resolve, reject) => {
-    const format = options.format || "jpeg";
-    const outPrefix = options.out_prefix || "page";
-
+    const format = options.format || 'jpeg';
+    const outPrefix = options.out_prefix || 'page';
+    
     // Create output directory if it doesn't exist
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-
+    
     // Build command arguments
     const args = [
       `-${format}`,
-      "-scale-to",
-      "1024",
+      '-scale-to', '1024',
       pdfPath,
-      `${path.join(outputDir, outPrefix)}`,
+      `${path.join(outputDir, outPrefix)}`
     ];
-
+    
     // Execute pdftocairo command
-    execFile("pdftocairo", args, (error, stdout, stderr) => {
+    execFile('pdftocairo', args, (error, stdout, stderr) => {
       if (error) {
-        console.error("PDF conversion error:", error);
+        console.error('PDF conversion error:', error);
         reject(error);
       } else {
         resolve(stdout);
@@ -94,17 +93,11 @@ route.post(
   ]),
   async (req, res) => {
     try {
-      const { bookTitle, bookDescription, categoryName } = req.body;
-      const bookImage = req.files["book_image"]?.[0];
-      const bookPdfFile = req.files["book_pdf"]?.[0];
+      const { bookTitle, bookDescription ,categoryName } = req.body;
+      const bookImage = req.files["book_image"][0];
+      const bookPdf = req.files["book_pdf"][0].filename;
 
-      if (
-        !bookDescription ||
-        !bookImage ||
-        !bookTitle ||
-        !bookPdfFile ||
-        !categoryName
-      ) {
+      if (!bookDescription || !bookImage || !bookTitle || !bookPdf || !categoryName) {
         return res.send({
           mess: "error",
           status: 400,
@@ -112,38 +105,31 @@ route.post(
         });
       }
 
-      // Upload book cover image to Cloudinary
+      // Upload image to Cloudinary
       const imageResult = await cloudinary.uploader.upload(bookImage.path, {
-        folder: "books/covers",
+        folder: "books",
         chunk_size: 6000000,
       });
+
+      // Delete local image file after upload
       fs.unlinkSync(bookImage.path);
 
-      // PDF local path
-      const pdfPath = bookPdfFile.path;
-      const pdfFileName = bookPdfFile.filename;
-      // const BookPdf = `${process.env.URL}/upload/${pdfFileName}`;
-
-      // (Optional) Upload raw PDF to Cloudinary (comment out if not needed)
-      const pdfCloud = await cloudinary.uploader.upload(pdfPath, {
-        folder: "books/pdf",
-        resource_type: "raw",
-      });
-      console.log("pdfCloud upload result:", pdfCloud);
-      const BookPdf = pdfCloud.secure_url;
-
-      // fs.unlinkSync(pdfPath);
+      const BookImage = imageResult.secure_url;
+      const BookPdf = `${process.env.URL}/upload/${bookPdf}`;
 
       // Convert PDF to images
+      const pdfPath = path.join("src/Book_Document", bookPdf);
       const outputDir = path.join(
         "src/Book_Document/images",
-        path.basename(pdfFileName, path.extname(pdfFileName))
+        path.basename(bookPdf, path.extname(bookPdf))
       );
-      // Ensure the output directory exists
+
       fs.mkdirSync(outputDir, { recursive: true });
 
+      // Use appropriate conversion method based on platform
       const platform = os.platform();
-      if (platform === "win32" || platform === "darwin") {
+      if (platform === 'win32' || platform === 'darwin') {
+        // Use pdf-poppler for Windows and Mac
         await pdf.convert(pdfPath, {
           format: "jpeg",
           out_dir: outputDir,
@@ -151,50 +137,52 @@ route.post(
           page: null,
         });
       } else {
+        // Use pdftocairo for Linux
         await convertPdfToImagesLinux(pdfPath, outputDir, {
           format: "jpeg",
-          out_prefix: "page",
+          out_prefix: "page"
         });
       }
 
-      // Upload all pages to Cloudinary
+      // Upload PDF images to Cloudinary and collect URLs
       const imageFiles = fs
         .readdirSync(outputDir)
-        .filter((f) => f.endsWith(".jpg") || f.endsWith(".jpeg"));
+        .filter((file) => file.endsWith(".jpg") || file.endsWith(".jpeg"));
+      
       const bookPagesData = [];
       const bookPagesPublicIds = [];
-
+      
+      // Upload each image to Cloudinary
       for (const img of imageFiles) {
         const imagePath = path.join(outputDir, img);
-        const result = await uploadToCloudinary(
-          imagePath,
-          `books/pages/${path.basename(pdfFileName, path.extname(pdfFileName))}`
-        );
+        const result = await uploadToCloudinary(imagePath, `books/pages/${path.basename(bookPdf, path.extname(bookPdf))}`);
         bookPagesData.push({
           url: result.secure_url,
-          publicId: result.public_id,
+          publicId: result.public_id
         });
         bookPagesPublicIds.push(result.public_id);
+        
+        // Delete local image after upload
         fs.unlinkSync(imagePath);
       }
-      fs.unlinkSync(pdfPath);
-      const bookPages = bookPagesData.map((p) => p.url);
+
+      // Extract just the URLs for backward compatibility
+      const bookPages = bookPagesData.map(page => page.url);
 
       const data = await BookSchema({
         bookTitle,
         bookDescription,
-        categoryName,
-        bookImage: imageResult.secure_url,
+        bookImage: BookImage,
+        categoryName:categoryName,
         bookPdf: BookPdf,
-        pdf_publicId: pdfCloud.public_id,
-        bookPages,
-        publicId: imageResult.public_id,
-        pagesPublicIds: bookPagesPublicIds,
+        bookPages: bookPages,
+        publicId: imageResult.public_id, // Cover image public ID
+        pagesPublicIds: bookPagesPublicIds // Store all page image public IDs
       });
 
       await data.save();
 
-      // Clean up folder
+      // Clean up the temporary directory
       if (fs.existsSync(outputDir)) {
         fs.rmSync(outputDir, { recursive: true, force: true });
       }
@@ -202,7 +190,7 @@ route.post(
       res.send({
         mess: "success",
         status: 200,
-        text: "Book uploaded successfully",
+        text: "Book uploaded and converted successfully",
         data,
       });
     } catch (err) {
@@ -212,7 +200,8 @@ route.post(
   }
 );
 
-route.get("/get_book", authenticate, authorize(["admin"]), async (req, res) => {
+route.get("/get_book", authenticate, authorize(["admin"]), 
+async (req, res) => {
   try {
     const data = await BookSchema.find({}).sort({ _id: -1 });
     res.send({
@@ -224,12 +213,10 @@ route.get("/get_book", authenticate, authorize(["admin"]), async (req, res) => {
   } catch (err) {
     res.send({ mess: "error", status: 400, text: err.message });
   }
-});
+}
+);
 
-route.put(
-  "/update_book/:id",
-  authenticate,
-  authorize(["admin"]),
+route.put("/update_book/:id", authenticate, authorize(["admin"]),
   upload.fields([
     { name: "book_image", maxCount: 1 },
     { name: "book_pdf", maxCount: 1 },
@@ -237,7 +224,7 @@ route.put(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { bookTitle, bookDescription, categoryName } = req.body;
+      const { bookTitle, bookDescription ,categoryName } = req.body;
 
       const existingBook = await BookSchema.findById(id);
       if (!existingBook) {
@@ -248,51 +235,66 @@ route.put(
         });
       }
 
-      const updateData = { bookTitle, bookDescription, categoryName };
+      const updateData = {
+        bookTitle,
+        bookDescription,
+        categoryName
+      };
 
-      // ====== Handle book image update ======
+      // ===== Handle book image update =====
       if (req.files?.book_image?.[0]) {
-        // Delete old image from Cloudinary
+        // Delete old image from Cloudinary if exists
         if (existingBook.publicId) {
           await cloudinary.uploader.destroy(existingBook.publicId);
         }
 
-        // Upload new image
-        const imageResult = await cloudinary.uploader.upload(
-          req.files.book_image[0].path,
-          { folder: "books/covers" }
-        );
+        // Upload new image to Cloudinary
+        const imageResult = await cloudinary.uploader.upload(req.files.book_image[0].path, {
+          folder: "books",
+          chunk_size: 6000000,
+        });
 
-        // Delete local temp image
+        // Delete local image file after upload
         fs.unlinkSync(req.files.book_image[0].path);
 
         updateData.bookImage = imageResult.secure_url;
         updateData.publicId = imageResult.public_id;
       }
 
-      // ====== Handle book PDF update ======
+      // ===== Handle PDF update & re-conversion =====
       if (req.files?.book_pdf?.[0]) {
-        const pdfPath = req.files.book_pdf[0].path;
-        const pdfFileName = req.files.book_pdf[0].filename;
+        const newPdf = req.files.book_pdf[0].filename;
+        updateData.bookPdf = `${process.env.URL}/upload/${newPdf}`;
 
-        // Upload new PDF to Cloudinary
-        const pdfCloud = await cloudinary.uploader.upload(pdfPath, {
-          folder: "books/pdf",
-          resource_type: "raw",
-        });
+        const pdfPath = path.join("src/Book_Document", newPdf);
+        const pdfFolderName = path.basename(newPdf, path.extname(newPdf));
+        const outputDir = path.join("src/Book_Document/images", pdfFolderName);
 
-        updateData.bookPdf = pdfCloud.secure_url;
-        updateData.pdf_publicId = pdfCloud.public_id;
+        // Delete old PDF images from Cloudinary
+        if (existingBook.pagesPublicIds && existingBook.pagesPublicIds.length > 0) {
+          for (const publicId of existingBook.pagesPublicIds) {
+            try {
+              await cloudinary.uploader.destroy(publicId);
+            } catch (err) {
+              console.error("Error deleting image from Cloudinary:", err);
+            }
+          }
+        }
 
-        // Convert uploaded PDF (local copy) to images before deleting it
-        const outputDir = path.join(
-          "src/Book_Document/images",
-          path.basename(pdfFileName, path.extname(pdfFileName))
-        );
+        // Remove old image folder (if exists)
+        const oldPdfFolderName = path.basename(existingBook.bookPdf || "", path.extname(existingBook.bookPdf || ""));
+        const oldImageDir = path.join("src/Book_Document/images", oldPdfFolderName);
+        if (fs.existsSync(oldImageDir)) {
+          fs.rmSync(oldImageDir, { recursive: true, force: true });
+        }
+
+        // Reconvert new PDF to images
         fs.mkdirSync(outputDir, { recursive: true });
 
+        // Use appropriate conversion method based on platform
         const platform = os.platform();
-        if (platform === "win32" || platform === "darwin") {
+        if (platform === 'win32' || platform === 'darwin') {
+          // Use pdf-poppler for Windows and Mac
           await pdf.convert(pdfPath, {
             format: "jpeg",
             out_dir: outputDir,
@@ -300,71 +302,64 @@ route.put(
             page: null,
           });
         } else {
+          // Use pdftocairo for Linux
           await convertPdfToImagesLinux(pdfPath, outputDir, {
             format: "jpeg",
-            out_prefix: "page",
+            out_prefix: "page"
           });
         }
 
-        // Upload generated images to Cloudinary
+        // Upload PDF images to Cloudinary and collect URLs
         const imageFiles = fs
           .readdirSync(outputDir)
-          .filter((f) => f.endsWith(".jpg") || f.endsWith(".jpeg"));
+          .filter((file) => file.endsWith(".jpg") || file.endsWith(".jpeg"));
+        
         const bookPagesData = [];
         const bookPagesPublicIds = [];
-
+        
+        // Upload each image to Cloudinary
         for (const img of imageFiles) {
-          const imgPath = path.join(outputDir, img);
-          const upload = await uploadToCloudinary(imgPath, `books/pages/${req.params.id}`);
-          bookPagesData.push({ url: upload.secure_url });
-          bookPagesPublicIds.push(upload.public_id);
-          try { fs.unlinkSync(imgPath); } catch (e) { /* ignore */ }
+          const imagePath = path.join(outputDir, img);
+          const result = await uploadToCloudinary(imagePath, `books/pages/${pdfFolderName}`);
+          bookPagesData.push({
+            url: result.secure_url,
+            publicId: result.public_id
+          });
+          bookPagesPublicIds.push(result.public_id);
+          
+          // Delete local image after upload
+          fs.unlinkSync(imagePath);
         }
 
-        // Remove local pdf and temp folder
-        try { if (fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath); } catch (e) { console.error(e); }
-        try { if (fs.existsSync(outputDir)) fs.rmSync(outputDir, { recursive: true, force: true }); } catch (e) { console.error(e); }
-
-        updateData.bookPages = bookPagesData.map((p) => p.url);
+        // Extract just the URLs for backward compatibility
+        updateData.bookPages = bookPagesData.map(page => page.url);
         updateData.pagesPublicIds = bookPagesPublicIds;
 
-        // Delete old PDF from Cloudinary
-        if (existingBook.pdf_publicId) {
-          try {
-            await cloudinary.uploader.destroy(existingBook.pdf_publicId, {
-              resource_type: "raw",
-            });
-          } catch (err) {
-            console.error("Error deleting old PDF:", err);
-          }
+        // Clean up the temporary directory
+        if (fs.existsSync(outputDir)) {
+          fs.rmSync(outputDir, { recursive: true, force: true });
         }
 
-        // Delete old page images from Cloudinary
-        if (existingBook.pagesPublicIds?.length) {
-          for (const pid of existingBook.pagesPublicIds) {
-            try {
-              await cloudinary.uploader.destroy(pid);
-            } catch (err) {
-              console.error("Error deleting old page image:", err);
-            }
-          }
+        // Mark old PDF file for deletion
+        const oldPdfName = existingBook.bookPdf?.split("/").pop();
+        if (oldPdfName && fs.existsSync(`src/Book_Document/${oldPdfName}`)) {
+          fs.unlinkSync(`src/Book_Document/${oldPdfName}`);
         }
       }
 
-      // ====== Update Book in DB ======
       const updatedBook = await BookSchema.findByIdAndUpdate(id, updateData, {
         new: true,
       });
 
-      res.status(200).send({
+      res.send({
         mess: "success",
         status: 200,
         text: "Book updated successfully",
         data: updatedBook,
       });
     } catch (err) {
-      console.error("❌ Error:", err);
-      res.status(400).send({
+      console.error(err);
+      res.send({
         mess: "error",
         status: 400,
         text: err.message,
@@ -406,45 +401,30 @@ route.delete("/delete_book/:id", authenticate, authorize(["admin"]),
         }
       }
 
-
-       if (data.pdf_publicId) {
+      // ==== Delete book PDF ====
+      const bookPdfFile = data.bookPdf?.split("/").pop();
+      if (bookPdfFile) {
         try {
-          await cloudinary.uploader.destroy(data.pdf_publicId, { resource_type: "raw" });
+          if (fs.existsSync(`src/Book_Document/${bookPdfFile}`)) {
+            fs.unlinkSync(`src/Book_Document/${bookPdfFile}`);
+          } else {
+            console.log(`PDF file not found: src/Book_Document/${bookPdfFile}`);
+          }
         } catch (err) {
-          console.error("Error deleting pdf from Cloudinary:", err);
+          console.error("Error deleting PDF:", err);
+        }
+
+        // ==== Delete local converted PDF images folder if it exists ====
+        const pdfFolderName = path.basename(bookPdfFile, path.extname(bookPdfFile));
+        const imageFolder = path.join("src/Book_Document/images", pdfFolderName);
+        if (fs.existsSync(imageFolder)) {
+          try {
+            fs.rmSync(imageFolder, { recursive: true, force: true });
+          } catch (err) {
+            console.error("Error deleting image folder:", err);
+          }
         }
       }
-
-      // ==== Delete book PDF ====
-      // const bookPdfFile = data.bookPdf?.split("/").pop();
-      // if (bookPdfFile) {
-      //   try {
-      //     if (fs.existsSync(`src/Book_Document/${bookPdfFile}`)) {
-      //       fs.unlinkSync(`src/Book_Document/${bookPdfFile}`);
-      //     } else {
-      //       console.log(`PDF file not found: src/Book_Document/${bookPdfFile}`);
-      //     }
-      //   } catch (err) {
-      //     console.error("Error deleting PDF:", err);
-      //   }
-
-      //   // ==== Delete local converted PDF images folder if it exists ====
-      //   const pdfFolderName = path.basename(
-      //     bookPdfFile,
-      //     path.extname(bookPdfFile)
-      //   );
-      //   const imageFolder = path.join(
-      //     "src/Book_Document/images",
-      //     pdfFolderName
-      //   );
-      //   if (fs.existsSync(imageFolder)) {
-      //     try {
-      //       fs.rmSync(imageFolder, { recursive: true, force: true });
-      //     } catch (err) {
-      //       console.error("Error deleting image folder:", err);
-      //     }
-      //   }
-      // }
 
       res.send({
         mess: "success",
@@ -462,11 +442,10 @@ route.delete("/delete_book/:id", authenticate, authorize(["admin"]),
   }
 );
 
+
 route.get("/get_book/:cat", async (req, res) => {
   try {
-    const data = await BookSchema.find({ categoryName: req.params.cat }).sort({
-      _id: -1,
-    });
+    const data = await BookSchema.find({categoryName:req.params.cat}).sort({ _id: -1 });
     res.send({
       mess: "success",
       status: 200,
@@ -477,6 +456,7 @@ route.get("/get_book/:cat", async (req, res) => {
     res.send({ mess: "error", status: 400, text: err.message });
   }
 });
+
 
 route.get("/get_all_book", async (req, res) => {
   try {

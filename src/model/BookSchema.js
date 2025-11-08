@@ -14,11 +14,15 @@ const BookSchema = new mongoose.Schema(
     },
     categoryName: {
       type: String,
-      required: false,
+      required: true,
+    },
+    pdf_publicId: {
+      type: String,
+      required: true,
     },
     publicId: {
       type: String,
-      required: false,
+      required: true,
     },
     pagesPublicIds: {
       type: [String],
