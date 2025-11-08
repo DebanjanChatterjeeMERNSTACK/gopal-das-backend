@@ -34,13 +34,39 @@ const Comments=require("./route/CommentsRoute");
 
 const PORT = process.env.PORT || 5000;
 
-const corsOptions = {
-  origin: "*", // Allow only frontend
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"], // Allow custom headers
-};
-app.use(cors(corsOptions));
+// const corsOptions = {
+//   origin: "*", // Allow only frontend
+//   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+//   credentials: true,
+//   allowedHeaders: ["Content-Type", "Authorization"], // Allow custom headers
+// };
+// app.use(cors(corsOptions));
+
+
+const allowedOrigins = [
+  "https://authorgopaldas.in",
+  "https://www.authorgopaldas.in", // optional for both versions
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // if you send cookies or auth headers
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// Handle preflight OPTIONS requests globally
+app.options("*", cors());
 
 app.use(express.json());
 
