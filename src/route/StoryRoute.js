@@ -47,6 +47,62 @@ async (req, res) => {
 }
 );
 
+route.get("/storyuser/:id",  async (req, res) => {
+  try {
+    const id=req.params.id
+    const data = await StorySchema.findOne({_id:id});
+
+    res.send({
+      mess: "success",
+      status: 200,
+      text: "Fetch Successfull",
+      data: data,
+    });
+  } catch (err) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+}
+);
+
+// UPDATE STORY
+route.put( "/story/:id", authenticate, authorize(["admin"]),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const updatedStory = await StorySchema.findByIdAndUpdate(
+        id,
+        {isPublished:req.body.isPublished},
+        {
+          new: true,        // updated data return করবে
+          runValidators: true,
+        }
+      );
+
+      if (!updatedStory) {
+        return res.status(404).send({
+          mess: "error",
+          status: 404,
+          text: "Story not found",
+        });
+      }
+
+      res.status(200).send({
+        mess: "success",
+        status: 200,
+        text: "Story pubslish successfully",
+        data: updatedStory,
+      });
+    } catch (err) {
+      res.status(400).send({
+        mess: "error",
+        status: 400,
+        text: err.message,
+      });
+    }
+  }
+);
+
 
 route.delete("/story/:id",authenticate,authorize(["admin"]),
   async (req, res) => {
@@ -92,6 +148,20 @@ route.delete("/story/:id",authenticate,authorize(["admin"]),
   }
 );
 
+route.get("/storyuser", async (req, res) => {
+  try {
+    const data = await StorySchema.find({isPublished:true}).sort({ _id: -1 });
 
+    res.send({
+      mess: "success",
+      status: 200,
+      text: "Fetch Successfull",
+      data: data,
+    });
+  } catch (err) {
+    res.send({ mess: "error", status: 400, text: err.message });
+  }
+}
+);
 
 module.exports = route;

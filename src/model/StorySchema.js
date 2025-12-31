@@ -19,6 +19,10 @@ const StorySchema = new mongoose.Schema({
   Date:{
     type:Date,
     default:Date.now()
+  },
+  isPublished:{
+    type:Boolean,
+    default:false
   }
 },
 {

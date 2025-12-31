@@ -31,11 +31,12 @@ const Story=require("./route/StoryRoute")
 const Book=require("./route/BookRoute");
 const Category=require("./route/CategoryRoute");
 const Comments=require("./route/CommentsRoute");
+const Visitor=require("./route/VisitorRoute")
 
 const PORT = process.env.PORT || 5000;
 
 const corsOptions = {
-  origin: ["https://authorgopaldas.in", "https://www.authorgopaldas.in"],
+  origin: ["https://authorgopaldas.in", "https://www.authorgopaldas.in","http://localhost:5173"],
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -59,6 +60,7 @@ app.use(Story)
 app.use(Book);
 app.use(Category)
 app.use(Comments)
+app.use(Visitor)
 
 app.listen(PORT, () => {
   console.log(`Server Connected on port ${PORT}`);
