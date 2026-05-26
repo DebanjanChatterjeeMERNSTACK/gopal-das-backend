@@ -62,6 +62,8 @@ app.use(Category)
 app.use(Comments)
 app.use(Visitor)
 
-app.listen(PORT, () => {
-  console.log(`Server Connected on port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server Connected on port ${PORT}`);
+// });
+
+module.exports = app;
