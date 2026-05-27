@@ -50,6 +50,11 @@ app.use("/upload",express.static("src/Image_Gallery"));
 app.use("/upload",express.static("src/Blog_Image"));
 app.use("/upload",express.static("src/Book_Document"));
 
+app.get("/",(req,res)=>{
+  res.status(200).send({
+    message:"project work"
+  })
+})
 
 app.use(Login);
 app.use(Video);
